@@ -24,3 +24,8 @@ export {
   applyLLMLayers,
 } from "./analyzer/layer-detector.js";
 export type { LLMLayerResponse } from "./analyzer/layer-detector.js";
+export {
+  buildTourGenerationPrompt,
+  parseTourGenerationResponse,
+  generateHeuristicTour,
+} from "./analyzer/tour-generator.js";
