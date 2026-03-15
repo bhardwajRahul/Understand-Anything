@@ -1,0 +1,71 @@
+<section class="showcase">
+  <p class="showcase-label reveal">See your codebase come alive</p>
+  <div class="showcase-frame reveal reveal-delay-1">
+    <div class="showcase-titlebar">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+    </div>
+    <img
+      src="/Understand-Anything/images/overview.png"
+      alt="Understand Anything dashboard showing an interactive knowledge graph of a codebase"
+      class="showcase-img"
+      loading="lazy"
+    />
+  </div>
+</section>
+
+<style>
+  .showcase {
+    padding: 4rem 2rem 6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .showcase-label {
+    font-family: var(--font-heading);
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+  }
+
+  .showcase-frame {
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 0 40px var(--accent-glow),
+      0 25px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .showcase-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: rgba(20, 20, 20, 0.8);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #28c840; }
+
+  .showcase-img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .showcase { padding: 2rem 1rem 4rem; }
+  }
+</style>

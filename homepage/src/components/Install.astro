@@ -1,0 +1,90 @@
+<section class="install" id="install">
+  <div class="install-inner reveal">
+    <h2 class="install-title">Get started in 30 seconds</h2>
+    <div class="install-code">
+      <div class="install-code-header">
+        <span class="install-code-dot"></span>
+        <span class="install-code-label">Claude Code</span>
+      </div>
+      <pre><code><span class="cmd">/plugin marketplace add</span> Lum1104/Understand-Anything
+<span class="cmd">/plugin install</span> understand-anything
+<span class="cmd">/understand</span></code></pre>
+    </div>
+    <p class="install-note">Works with <strong>Claude Code</strong> — Anthropic's official CLI for Claude.</p>
+  </div>
+</section>
+
+<style>
+  .install {
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+
+  .install-inner {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .install-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    color: var(--text);
+    margin-bottom: 2rem;
+  }
+
+  .install-code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    text-align: left;
+    margin-bottom: 1.5rem;
+  }
+
+  .install-code-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .install-code-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .install-code-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: var(--font-code);
+  }
+
+  pre {
+    padding: 1.25rem 1.5rem;
+    margin: 0;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: var(--font-code);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .cmd {
+    color: var(--accent);
+  }
+
+  .install-note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .install-note strong {
+    color: var(--text);
+  }
+</style>

@@ -1,0 +1,125 @@
+---
+const githubUrl = 'https://github.com/Lum1104/Understand-Anything';
+---
+
+<section class="hero">
+  <div class="hero-bg">
+    <img src="/Understand-Anything/images/hero.jpg" alt="" class="hero-bg-img" loading="eager" />
+    <div class="hero-overlay"></div>
+  </div>
+  <div class="hero-content">
+    <h1 class="hero-title">Understand Any Codebase</h1>
+    <p class="hero-sub">
+      Turn 200,000 lines of code into an interactive knowledge graph you can
+      explore, search, and learn from — powered by multi-agent AI analysis.
+    </p>
+    <div class="hero-actions">
+      <a href="#install" class="hero-cta">Get Started</a>
+      <a href={githubUrl} target="_blank" rel="noopener noreferrer" class="hero-secondary">
+        View on GitHub &rarr;
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.25;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10, 10, 10, 0.3) 0%,
+      rgba(10, 10, 10, 0.7) 60%,
+      var(--bg) 100%
+    );
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    padding: 2rem;
+    animation: fadeSlideUp 1s ease-out;
+  }
+
+  .hero-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 60px var(--accent-glow);
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-cta {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 0.85rem 2.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+  }
+
+  .hero-cta:hover {
+    text-decoration: none;
+    box-shadow: 0 0 30px var(--accent-glow), 0 0 60px rgba(212, 165, 116, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .hero-secondary {
+    color: var(--text-muted);
+    font-size: 1rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .hero-secondary:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 480px) {
+    .hero-actions { flex-direction: column; gap: 1rem; }
+  }
+</style>

@@ -1,0 +1,86 @@
+---
+const features = [
+  {
+    icon: '◈',
+    title: 'Interactive Knowledge Graph',
+    description: 'Visualize files, functions, and dependencies as an explorable graph with smart layout.',
+  },
+  {
+    icon: '¶',
+    title: 'Plain-English Summaries',
+    description: 'Every node explained in language anyone can understand — from junior devs to product managers.',
+  },
+  {
+    icon: '⟐',
+    title: 'Guided Tours',
+    description: 'AI-generated walkthroughs that teach you the codebase step by step.',
+  },
+];
+---
+
+<section class="features">
+  <div class="features-grid">
+    {features.map((f, i) => (
+      <div class={`feature-card reveal reveal-delay-${i + 1}`}>
+        <span class="feature-icon">{f.icon}</span>
+        <h3 class="feature-title">{f.title}</h3>
+        <p class="feature-desc">{f.description}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .features {
+    padding: 2rem 2rem 6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    backdrop-filter: blur(8px);
+  }
+
+  .feature-card:hover {
+    border-color: rgba(212, 165, 116, 0.3);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .feature-icon {
+    display: block;
+    font-size: 1.75rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .feature-title {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-desc {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .features-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+</style>
