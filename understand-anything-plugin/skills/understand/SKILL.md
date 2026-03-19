@@ -46,11 +46,37 @@ Determine whether to run a full analysis or incremental update.
    ```
    If this returns no files, report "Graph is up to date" and STOP.
 
+7. **Collect project context for subagent injection:**
+   - Read `README.md` (or `README.rst`, `readme.md`) from `$PROJECT_ROOT` if it exists. Store as `$README_CONTENT` (first 3000 characters).
+   - Read the primary package manifest (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`) if it exists. Store as `$MANIFEST_CONTENT`.
+   - Capture the top-level directory tree:
+     ```bash
+     find $PROJECT_ROOT -maxdepth 2 -type f | head -100
+     ```
+     Store as `$DIR_TREE`.
+   - Detect the project entry point by checking for common patterns: `src/index.ts`, `src/main.ts`, `src/App.tsx`, `main.py`, `main.go`, `src/main.rs`, `index.js`. Store first match as `$ENTRY_POINT`.
+
 ---
 
 ## Phase 1 — SCAN (Full analysis only)
 
-Dispatch the **project-scanner** agent with this prompt:
+Dispatch a subagent using the prompt template at `./project-scanner-prompt.md`. Read the template file and pass the full content as the subagent's prompt, appending the following additional context:
+
+> **Additional context from main session:**
+>
+> Project README (first 3000 chars):
+> ```
+> $README_CONTENT
+> ```
+>
+> Package manifest:
+> ```
+> $MANIFEST_CONTENT
+> ```
+>
+> Use this context to produce more accurate project name, description, and framework detection. The README and manifest are authoritative — prefer their information over heuristics.
+
+Pass these parameters in the dispatch prompt:
 
 > Scan this project directory to discover all source files, detect languages and frameworks.
 > Project root: `$PROJECT_ROOT`
@@ -72,7 +98,23 @@ After the agent completes, read `$PROJECT_ROOT/.understand-anything/intermediate
 
 Batch the file list from Phase 1 into groups of **5-10 files each** (aim for balanced batch sizes).
 
-For each batch, dispatch a **file-analyzer** agent. Run up to **3 agents concurrently** using parallel dispatch. Each agent gets this prompt:
+For each batch, dispatch a subagent using the prompt template at `./file-analyzer-prompt.md`. Run up to **3 subagents concurrently** using parallel dispatch. Read the template once, then for each batch pass the full template content as the subagent's prompt, appending the following additional context:
+
+> **Additional context from main session:**
+>
+> Project: `<projectName>` — `<projectDescription>`
+> Frameworks detected: `<frameworks from Phase 1>`
+> Languages: `<languages from Phase 1>`
+>
+> Framework-specific guidance:
+> - If React/Next.js: files in `app/` or `pages/` are routes, `components/` are UI, `lib/` or `utils/` are utilities
+> - If Express/Fastify: files in `routes/` are API endpoints, `middleware/` is middleware, `models/` or `db/` is data
+> - If Python Django: `views.py` are controllers, `models.py` is data, `urls.py` is routing, `templates/` is UI
+> - If Go: `cmd/` is entry points, `internal/` is private packages, `pkg/` is public packages
+>
+> Use this context to produce more accurate summaries and better classify file roles.
+
+Fill in batch-specific parameters below and dispatch:
 
 > Analyze these source files and produce GraphNode and GraphEdge objects.
 > Project root: `$PROJECT_ROOT`
@@ -116,7 +158,26 @@ Merge all file-analyzer results into a single set of nodes and edges. Then perfo
 
 ## Phase 4 — ARCHITECTURE
 
-Dispatch the **architecture-analyzer** agent with this prompt:
+Dispatch a subagent using the prompt template at `./architecture-analyzer-prompt.md`. Read the template file and pass the full content as the subagent's prompt, appending the following additional context:
+
+> **Additional context from main session:**
+>
+> Frameworks detected: `<frameworks from Phase 1>`
+>
+> Directory tree (top 2 levels):
+> ```
+> $DIR_TREE
+> ```
+>
+> Framework-specific layer hints:
+> - If React/Next.js: `app/` or `pages/` → UI Layer, `api/` → API Layer, `lib/` → Service Layer, `components/` → UI Layer
+> - If Express: `routes/` → API Layer, `controllers/` → Service Layer, `models/` → Data Layer, `middleware/` → Middleware Layer
+> - If Python Django: `views/` → API Layer, `models/` → Data Layer, `templates/` → UI Layer, `management/` → CLI Layer
+> - If Go: `cmd/` → Entry Points, `internal/` → Service Layer, `pkg/` → Shared Library, `api/` → API Layer
+>
+> Use the directory tree and framework hints to inform layer assignments. Directory structure is strong evidence for layer boundaries.
+
+Pass these parameters in the dispatch prompt:
 
 > Analyze this codebase's structure to identify architectural layers.
 > Project root: `$PROJECT_ROOT`
@@ -137,11 +198,33 @@ After the agent completes, read `$PROJECT_ROOT/.understand-anything/intermediate
 
 **For incremental updates:** Always re-run architecture analysis on the full merged node set, since layer assignments may shift when files change.
 
+**Context for incremental updates:** When re-running architecture analysis, also inject the previous layer definitions:
+
+> Previous layer definitions (for naming consistency):
+> ```json
+> [previous layers from existing graph]
+> ```
+>
+> Maintain the same layer names and IDs where possible. Only add/remove layers if the file structure has materially changed.
+
 ---
 
 ## Phase 5 — TOUR
 
-Dispatch the **tour-builder** agent with this prompt:
+Dispatch a subagent using the prompt template at `./tour-builder-prompt.md`. Read the template file and pass the full content as the subagent's prompt, appending the following additional context:
+
+> **Additional context from main session:**
+>
+> Project README (first 3000 chars):
+> ```
+> $README_CONTENT
+> ```
+>
+> Project entry point: `$ENTRY_POINT`
+>
+> Use the README to align the tour narrative with the project's own documentation. Start the tour from the entry point if one was detected. The tour should tell the same story the README tells, but through the lens of actual code structure.
+
+Pass these parameters in the dispatch prompt:
 
 > Create a guided learning tour for this codebase.
 > Project root: `$PROJECT_ROOT`
@@ -192,7 +275,21 @@ Assemble the full KnowledgeGraph JSON object:
 
 1. Write the assembled graph to `$PROJECT_ROOT/.understand-anything/intermediate/assembled-graph.json`.
 
-2. Dispatch the **graph-reviewer** agent with this prompt:
+2. Dispatch a subagent using the prompt template at `./graph-reviewer-prompt.md`. Read the template file and pass the full content as the subagent's prompt, appending the following additional context:
+
+> **Additional context from main session:**
+>
+> Phase 1 scan results (file inventory):
+> ```json
+> [list of {path, sizeLines} from scan-result.json]
+> ```
+>
+> Phase warnings/errors accumulated during analysis:
+> - [list any batch failures, skipped files, or warnings from Phases 2-5]
+>
+> Cross-validate: every file in the scan inventory should have a corresponding `file:` node in the graph. Flag any missing files. Also flag any graph nodes whose `filePath` doesn't appear in the scan inventory.
+
+Pass these parameters in the dispatch prompt:
 
    > Validate the knowledge graph at `$PROJECT_ROOT/.understand-anything/intermediate/assembled-graph.json`.
    > Project root: `$PROJECT_ROOT`
@@ -248,7 +345,8 @@ Assemble the full KnowledgeGraph JSON object:
 
 ## Error Handling
 
-- If any agent dispatch fails, retry **once** with the same prompt plus additional context about the failure.
+- If any subagent dispatch fails, retry **once** with the same prompt plus additional context about the failure.
+- Track all warnings and errors from each phase in a `$PHASE_WARNINGS` list. Pass this list to the graph-reviewer in Phase 6 for comprehensive validation.
 - If it fails a second time, skip that phase and continue with partial results.
 - ALWAYS save partial results — a partial graph is better than no graph.
 - Report any skipped phases or errors in the final summary so the user knows what happened.
