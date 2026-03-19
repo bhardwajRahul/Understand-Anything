@@ -95,6 +95,59 @@ An interactive web dashboard opens with your codebase visualized as a graph — 
 
 ---
 
+## 🌐 Multi-Platform Installation
+
+Understand-Anything works across multiple AI coding platforms.
+
+### Claude Code (Native)
+
+```bash
+/plugin marketplace add Lum1104/Understand-Anything
+/plugin install understand-anything
+```
+
+### Codex
+
+Tell Codex:
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Understand-Anything/refs/heads/main/understand-anything-plugin/.codex/INSTALL.md
+```
+
+### OpenCode
+
+Add to your `opencode.json`:
+```json
+{
+  "plugin": ["understand-anything@git+https://github.com/Lum1104/Understand-Anything.git"]
+}
+```
+
+### OpenClaw
+
+Tell OpenClaw:
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Understand-Anything/refs/heads/main/understand-anything-plugin/.openclaw/INSTALL.md
+```
+
+### Cursor
+
+Tell Cursor:
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Understand-Anything/refs/heads/main/understand-anything-plugin/.cursor/INSTALL.md
+```
+
+### Platform Compatibility
+
+| Platform | Status | Install Method |
+|----------|--------|----------------|
+| Claude Code | ✅ Native | Plugin marketplace |
+| Codex | ✅ Supported | AI-driven install |
+| OpenCode | ✅ Supported | Plugin config |
+| OpenClaw | ✅ Supported | AI-driven install |
+| Cursor | ✅ Supported | AI-driven install |
+
+---
+
 ## ✨ Features
 
 <p align="center">
