@@ -12,6 +12,8 @@ Analyze the current codebase and produce a `knowledge-graph.json` file in `.unde
 
 - `$ARGUMENTS` may contain:
   - `--full` — Force a full rebuild, ignoring any existing graph
+  - `--auto-update` — Enable automatic graph updates on commit (writes `autoUpdate: true` to `.understand-anything/config.json`)
+  - `--no-auto-update` — Disable automatic graph updates (writes `autoUpdate: false` to `.understand-anything/config.json`)
   - A directory path — Scope analysis to a specific subdirectory
 
 ---
@@ -29,6 +31,11 @@ Determine whether to run a full analysis or incremental update.
    ```bash
    mkdir -p $PROJECT_ROOT/.understand-anything/intermediate
    ```
+3.5. **Auto-update configuration:**
+   - If `--auto-update` is in `$ARGUMENTS`: write `{"autoUpdate": true}` to `$PROJECT_ROOT/.understand-anything/config.json`
+   - If `--no-auto-update` is in `$ARGUMENTS`: write `{"autoUpdate": false}` to `$PROJECT_ROOT/.understand-anything/config.json`
+   - These flags only set the config — analysis proceeds normally regardless.
+
 4. Check if `$PROJECT_ROOT/.understand-anything/knowledge-graph.json` exists. If it does, read it.
 5. Check if `$PROJECT_ROOT/.understand-anything/meta.json` exists. If it does, read it to get `gitCommitHash`.
 6. **Decision logic:**
@@ -375,6 +382,37 @@ Pass these parameters in the dispatch prompt:
      "analyzedFiles": <number of files analyzed>
    }
    ```
+
+2.5. **Generate structural fingerprints** for all analyzed files and save to `$PROJECT_ROOT/.understand-anything/fingerprints.json`. This creates the baseline for future automatic incremental updates.
+
+   Write and execute a Node.js script that:
+   1. Reads each source file path from the scan results (Phase 1)
+   2. For each file: computes a SHA-256 content hash, then extracts function/class/import/export declarations via regex matching:
+      - Functions: `function NAME(`, `const NAME = (`, `export function NAME(`, arrow functions assigned to const/let
+      - Classes: `class NAME`, `export class NAME`
+      - Imports: `import ... from '...'`, `import '...'`
+      - Exports: `export { ... }`, `export default`, `export function`, `export class`, `export const`
+   3. For each function: record name, parameter names, whether exported, and line count
+   4. For each class: record name, method names, property names, whether exported
+   5. Writes the fingerprint store JSON to `$PROJECT_ROOT/.understand-anything/fingerprints.json`:
+      ```json
+      {
+        "version": "1.0.0",
+        "gitCommitHash": "<commit hash>",
+        "generatedAt": "<ISO timestamp>",
+        "files": {
+          "<filePath>": {
+            "filePath": "<filePath>",
+            "contentHash": "<sha256>",
+            "functions": [{ "name": "...", "params": ["..."], "exported": true, "lineCount": 35 }],
+            "classes": [{ "name": "...", "methods": ["..."], "properties": ["..."], "exported": true, "lineCount": 50 }],
+            "imports": [{ "source": "...", "specifiers": ["..."] }],
+            "exports": ["name1", "name2"],
+            "totalLines": 120
+          }
+        }
+      }
+      ```
 
 3. Clean up intermediate files:
    ```bash

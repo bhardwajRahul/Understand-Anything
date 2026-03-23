@@ -74,6 +74,11 @@ export interface AnalysisMeta {
   analyzedFiles: number;
 }
 
+// Project config (for auto-update opt-in)
+export interface ProjectConfig {
+  autoUpdate: boolean;
+}
+
 // Plugin interfaces
 export interface StructuralAnalysis {
   functions: Array<{ name: string; lineRange: [number, number]; params: string[]; returnType?: string }>;
