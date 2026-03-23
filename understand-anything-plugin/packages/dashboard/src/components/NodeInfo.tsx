@@ -20,6 +20,10 @@ export default function NodeInfo() {
   const selectedNodeId = useDashboardStore((s) => s.selectedNodeId);
   const [languageExpanded, setLanguageExpanded] = useState(true);
 
+  const navigateToNode = useDashboardStore((s) => s.navigateToNode);
+  const openCodeViewer = useDashboardStore((s) => s.openCodeViewer);
+  const setFocusNode = useDashboardStore((s) => s.setFocusNode);
+  const focusNodeId = useDashboardStore((s) => s.focusNodeId);
   const node = graph?.nodes.find((n) => n.id === selectedNodeId) ?? null;
 
   if (!node) {
@@ -53,7 +57,19 @@ export default function NodeInfo() {
         </span>
       </div>
 
-      <h2 className="text-lg font-serif text-text-primary mb-2">{node.name}</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-serif text-text-primary">{node.name}</h2>
+        <button
+          onClick={() => setFocusNode(focusNodeId === node.id ? null : node.id)}
+          className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded transition-colors ${
+            focusNodeId === node.id
+              ? "bg-gold/20 text-gold border border-gold/40"
+              : "text-text-muted border border-border-subtle hover:text-gold hover:border-gold/30"
+          }`}
+        >
+          {focusNodeId === node.id ? "Unfocus" : "Focus"}
+        </button>
+      </div>
 
       <p className="text-sm text-text-secondary mb-4 leading-relaxed">
         {node.summary}
@@ -130,7 +146,11 @@ export default function NodeInfo() {
               return (
                 <div
                   key={i}
-                  className="text-xs bg-elevated rounded-lg px-3 py-2 border border-border-subtle flex items-center gap-2"
+                  className="text-xs bg-elevated rounded-lg px-3 py-2 border border-border-subtle flex items-center gap-2 cursor-pointer hover:border-gold/40 hover:bg-gold/5 transition-colors"
+                  onClick={() => {
+                    navigateToNode(otherId);
+                    openCodeViewer(otherId);
+                  }}
                 >
                   <span className="text-gold font-mono">{arrow}</span>
                   <span className="text-text-muted">{edge.type}</span>

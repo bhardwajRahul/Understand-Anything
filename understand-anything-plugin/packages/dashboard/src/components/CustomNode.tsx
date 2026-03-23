@@ -35,6 +35,8 @@ export interface CustomNodeData extends Record<string, unknown> {
   isDiffChanged: boolean;
   isDiffAffected: boolean;
   isDiffFaded: boolean;
+  isNeighbor: boolean;
+  isSelectionFaded: boolean;
   onNodeClick?: (nodeId: string) => void;
 }
 
@@ -71,6 +73,13 @@ export default function CustomNode({
     extraClass += " ring-1 ring-[var(--color-diff-affected)] diff-affected-glow";
   } else if (data.isDiffFaded) {
     extraClass += " diff-faded";
+  }
+
+  // Selection-based dimming (when another node is selected, fade unrelated nodes)
+  if (data.isSelectionFaded) {
+    extraClass += " opacity-20 pointer-events-auto";
+  } else if (data.isNeighbor) {
+    extraClass += " ring-1 ring-gold-dim/50";
   }
 
   const name = data.label ?? "unnamed";

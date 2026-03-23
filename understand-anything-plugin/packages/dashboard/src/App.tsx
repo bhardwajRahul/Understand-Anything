@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ReactFlowProvider } from "@xyflow/react";
 import { validateGraph } from "@understand-anything/core/schema";
 import { useDashboardStore } from "./store";
 import GraphView from "./components/GraphView";
@@ -68,13 +69,15 @@ function App() {
   }, [setDiffOverlay]);
 
   // Determine sidebar content
-  // Learn persona always shows LearnPanel; tour active overrides everything
-  const sidebarContent = tourActive || persona === "junior" ? (
-    <LearnPanel />
-  ) : selectedNodeId ? (
-    <NodeInfo />
-  ) : (
-    <ProjectOverview />
+  // Learn mode shows LearnPanel + NodeInfo when a node is selected
+  // Other modes show NodeInfo when selected, ProjectOverview otherwise
+  const isLearnMode = tourActive || persona === "junior";
+  const sidebarContent = (
+    <>
+      {isLearnMode && <LearnPanel />}
+      {selectedNodeId && <NodeInfo />}
+      {!selectedNodeId && !isLearnMode && <ProjectOverview />}
+    </>
   );
 
   return (
@@ -108,11 +111,13 @@ function App() {
       <div className="flex-1 flex min-h-0 relative">
         {/* Graph area */}
         <div className="flex-1 min-w-0 min-h-0">
-          <GraphView />
+          <ReactFlowProvider>
+            <GraphView />
+          </ReactFlowProvider>
         </div>
 
         {/* Right sidebar */}
-        <aside className="w-[360px] shrink-0 bg-surface border-l border-border-subtle overflow-hidden">
+        <aside className="w-[360px] shrink-0 bg-surface border-l border-border-subtle overflow-auto">
           {sidebarContent}
         </aside>
 

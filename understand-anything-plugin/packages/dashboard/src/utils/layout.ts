@@ -11,10 +11,13 @@ export function applyDagreLayout(
 ): { nodes: Node[]; edges: Edge[] } {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
+
+  // Scale spacing for larger graphs to reduce overlap
+  const isLarge = nodes.length > 50;
   g.setGraph({
     rankdir: direction,
-    nodesep: 60,
-    ranksep: 80,
+    nodesep: isLarge ? 80 : 60,
+    ranksep: isLarge ? 120 : 80,
     marginx: 20,
     marginy: 20,
   });

@@ -32,8 +32,16 @@ interface DashboardStore {
   changedNodeIds: Set<string>;
   affectedNodeIds: Set<string>;
 
+  // Zoom-to-node: set a nodeId to trigger GraphView to pan/zoom to it
+  zoomToNodeId: string | null;
+
+  // Focus mode: isolate a node's 1-hop neighborhood
+  focusNodeId: string | null;
+
   setGraph: (graph: KnowledgeGraph) => void;
   selectNode: (nodeId: string | null) => void;
+  navigateToNode: (nodeId: string) => void;
+  setFocusNode: (nodeId: string | null) => void;
   setSearchQuery: (query: string) => void;
   toggleLayers: () => void;
   setPersona: (persona: Persona) => void;
@@ -79,6 +87,9 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
   changedNodeIds: new Set<string>(),
   affectedNodeIds: new Set<string>(),
 
+  zoomToNodeId: null,
+  focusNodeId: null,
+
   setGraph: (graph) => {
     const searchEngine = new SearchEngine(graph.nodes);
     const query = get().searchQuery;
@@ -86,6 +97,8 @@ export const useDashboardStore = create<DashboardStore>()((set, get) => ({
     set({ graph, searchEngine, searchResults });
   },
   selectNode: (nodeId) => set({ selectedNodeId: nodeId }),
+  navigateToNode: (nodeId) => set({ selectedNodeId: nodeId, zoomToNodeId: nodeId }),
+  setFocusNode: (nodeId) => set({ focusNodeId: nodeId, selectedNodeId: nodeId }),
   setSearchMode: (mode) => set({ searchMode: mode }),
   setSearchQuery: (query) => {
     const engine = get().searchEngine;

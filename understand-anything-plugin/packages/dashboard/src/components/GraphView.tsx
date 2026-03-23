@@ -3,6 +3,7 @@ import {
   ReactFlow,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   Background,
   BackgroundVariant,
   Controls,
@@ -15,7 +16,7 @@ import CustomNode from "./CustomNode";
 import type { CustomFlowNode } from "./CustomNode";
 import { useDashboardStore } from "../store";
 import { applyDagreLayout, NODE_WIDTH, NODE_HEIGHT } from "../utils/layout";
-// Layer colors are hardcoded to gold-tinted values in the group node styles
+import { getLayerColor } from "./LayerLegend";
 
 const LAYER_PADDING = 40;
 
@@ -33,6 +34,8 @@ export default function GraphView() {
   const diffMode = useDashboardStore((s) => s.diffMode);
   const changedNodeIds = useDashboardStore((s) => s.changedNodeIds);
   const affectedNodeIds = useDashboardStore((s) => s.affectedNodeIds);
+  const focusNodeId = useDashboardStore((s) => s.focusNodeId);
+  const setFocusNode = useDashboardStore((s) => s.setFocusNode);
 
   const handleNodeSelect = useCallback(
     (nodeId: string) => {
@@ -50,7 +53,7 @@ export default function GraphView() {
       };
 
     // Filter nodes and edges based on persona
-    const filteredGraphNodes =
+    let filteredGraphNodes =
       persona === "non-technical"
         ? graph.nodes.filter(
             (n) =>
@@ -58,16 +61,41 @@ export default function GraphView() {
           )
         : graph.nodes;
 
-    const filteredNodeIds = new Set(filteredGraphNodes.map((n) => n.id));
-    const filteredGraphEdges =
+    let filteredNodeIds = new Set(filteredGraphNodes.map((n) => n.id));
+    let filteredGraphEdges =
       persona === "non-technical"
         ? graph.edges.filter(
             (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target),
           )
         : graph.edges;
 
+    // Focus mode: filter to 1-hop neighborhood of the focused node
+    if (focusNodeId && filteredNodeIds.has(focusNodeId)) {
+      const focusNeighborIds = new Set<string>([focusNodeId]);
+      for (const edge of filteredGraphEdges) {
+        if (edge.source === focusNodeId) focusNeighborIds.add(edge.target);
+        if (edge.target === focusNodeId) focusNeighborIds.add(edge.source);
+      }
+      filteredGraphNodes = filteredGraphNodes.filter((n) => focusNeighborIds.has(n.id));
+      filteredNodeIds = new Set(filteredGraphNodes.map((n) => n.id));
+      filteredGraphEdges = filteredGraphEdges.filter(
+        (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target),
+      );
+    }
+
+    // Compute neighbor set for selection-based highlighting
+    const neighborNodeIds = new Set<string>();
+    if (selectedNodeId) {
+      for (const edge of filteredGraphEdges) {
+        if (edge.source === selectedNodeId) neighborNodeIds.add(edge.target);
+        if (edge.target === selectedNodeId) neighborNodeIds.add(edge.source);
+      }
+      neighborNodeIds.add(selectedNodeId);
+    }
+
     const flowNodes: CustomFlowNode[] = filteredGraphNodes.map((node) => {
       const matchResult = searchResults.find((r) => r.nodeId === node.id);
+      const hasSelection = !!selectedNodeId;
       return {
         id: node.id,
         type: "custom" as const,
@@ -84,6 +112,8 @@ export default function GraphView() {
           isDiffChanged: diffMode && changedNodeIds.has(node.id),
           isDiffAffected: diffMode && affectedNodeIds.has(node.id),
           isDiffFaded: diffMode && !changedNodeIds.has(node.id) && !affectedNodeIds.has(node.id),
+          isNeighbor: hasSelection && neighborNodeIds.has(node.id) && selectedNodeId !== node.id,
+          isSelectionFaded: hasSelection && !neighborNodeIds.has(node.id),
           onNodeClick: handleNodeSelect,
         },
       };
@@ -95,25 +125,49 @@ export default function GraphView() {
       const targetInDiff = diffMode && diffNodeIds.has(edge.target);
       const isImpacted = diffMode && (sourceInDiff || targetInDiff);
 
+      // Selection-based edge highlighting
+      const isSelectedEdge = !!selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId);
+      const hasSelection = !!selectedNodeId;
+
+      let edgeStyle: React.CSSProperties;
+      let edgeLabelStyle: React.CSSProperties;
+      let edgeAnimated: boolean;
+
+      if (isImpacted) {
+        edgeStyle = {
+          stroke: sourceInDiff && targetInDiff
+            ? "rgba(224, 82, 82, 0.7)"
+            : "rgba(212, 160, 48, 0.5)",
+          strokeWidth: 2.5,
+        };
+        edgeLabelStyle = { fill: "#a39787", fontSize: 10 };
+        edgeAnimated = true;
+      } else if (diffMode) {
+        edgeStyle = { stroke: "rgba(212,165,116,0.08)", strokeWidth: 1 };
+        edgeLabelStyle = { fill: "rgba(163,151,135,0.3)", fontSize: 10 };
+        edgeAnimated = false;
+      } else if (isSelectedEdge) {
+        edgeStyle = { stroke: "rgba(212,165,116,0.8)", strokeWidth: 2.5 };
+        edgeLabelStyle = { fill: "#d4a574", fontSize: 11, fontWeight: 600 };
+        edgeAnimated = true;
+      } else if (hasSelection) {
+        edgeStyle = { stroke: "rgba(212,165,116,0.08)", strokeWidth: 1 };
+        edgeLabelStyle = { fill: "rgba(163,151,135,0.2)", fontSize: 10 };
+        edgeAnimated = false;
+      } else {
+        edgeStyle = { stroke: "rgba(212,165,116,0.3)", strokeWidth: 1.5 };
+        edgeLabelStyle = { fill: "#a39787", fontSize: 10 };
+        edgeAnimated = edge.type === "calls";
+      }
+
       return {
         id: `e-${i}`,
         source: edge.source,
         target: edge.target,
         label: edge.type,
-        animated: edge.type === "calls" || isImpacted,
-        style: isImpacted
-          ? {
-              stroke: sourceInDiff && targetInDiff
-                ? "rgba(224, 82, 82, 0.7)"
-                : "rgba(212, 160, 48, 0.5)",
-              strokeWidth: 2.5,
-            }
-          : diffMode
-            ? { stroke: "rgba(212,165,116,0.08)", strokeWidth: 1 }
-            : { stroke: "rgba(212,165,116,0.3)", strokeWidth: 1.5 },
-        labelStyle: diffMode && !isImpacted
-          ? { fill: "rgba(163,151,135,0.3)", fontSize: 10 }
-          : { fill: "#a39787", fontSize: 10 },
+        animated: edgeAnimated,
+        style: edgeStyle,
+        labelStyle: edgeLabelStyle,
       };
     });
 
@@ -167,7 +221,8 @@ export default function GraphView() {
       const groupWidth = maxX - minX + LAYER_PADDING * 2;
       const groupHeight = maxY - minY + LAYER_PADDING * 2 + 24;
 
-      // Create the group node
+      // Create the group node with distinct color per layer
+      const layerColor = getLayerColor(layerIdx);
       groupNodes.push({
         id: layer.id,
         type: "group",
@@ -176,13 +231,13 @@ export default function GraphView() {
         style: {
           width: groupWidth,
           height: groupHeight,
-          backgroundColor: "rgba(212,165,116,0.05)",
+          backgroundColor: layerColor.bg,
           borderRadius: 12,
-          border: `2px dashed rgba(212,165,116,0.25)`,
+          border: `2px solid ${layerColor.border}`,
           padding: 8,
           fontSize: 13,
           fontWeight: 600,
-          color: "#d4a574",
+          color: layerColor.label,
         },
       });
 
@@ -214,10 +269,12 @@ export default function GraphView() {
     ];
 
     return { initialNodes: allNodes, initialEdges: laid.edges };
-  }, [graph, searchResults, selectedNodeId, showLayers, tourHighlightedNodeIds, persona, handleNodeSelect, diffMode, changedNodeIds, affectedNodeIds]);
+  }, [graph, searchResults, selectedNodeId, showLayers, tourHighlightedNodeIds, persona, handleNodeSelect, diffMode, changedNodeIds, affectedNodeIds, focusNodeId]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const { fitView } = useReactFlow();
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -226,6 +283,19 @@ export default function GraphView() {
   useEffect(() => {
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
+
+  // Zoom-to-node when navigateToNode is called
+  const zoomToNodeId = useDashboardStore((s) => s.zoomToNodeId);
+  useEffect(() => {
+    if (zoomToNodeId) {
+      // Small delay to let React Flow update node positions first
+      const timer = setTimeout(() => {
+        fitView({ nodes: [{ id: zoomToNodeId }], duration: 400, padding: 0.5 });
+        useDashboardStore.setState({ zoomToNodeId: null });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [zoomToNodeId, fitView]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: { id: string }) => {
@@ -251,7 +321,18 @@ export default function GraphView() {
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full relative">
+      {focusNodeId && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+          <button
+            onClick={() => setFocusNode(null)}
+            className="px-4 py-2 rounded-full bg-elevated border border-gold/30 text-gold text-xs font-semibold tracking-wider uppercase hover:bg-gold/10 transition-colors flex items-center gap-2 shadow-lg"
+          >
+            <span>Showing neighborhood</span>
+            <span className="text-text-muted">&times;</span>
+          </button>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -261,6 +342,10 @@ export default function GraphView() {
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.05}
+        maxZoom={4}
+        panOnScroll
         colorMode="dark"
       >
         <Background variant={BackgroundVariant.Dots} color="rgba(212,165,116,0.15)" gap={20} size={1} />
