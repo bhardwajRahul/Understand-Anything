@@ -145,6 +145,20 @@ Antigravity'e söyle:
 Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Understand-Anything/refs/heads/main/.antigravity/INSTALL.md
 ```
 
+### Gemini CLI
+
+Gemini CLI'a söyle:
+```text
+Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Understand-Anything/refs/heads/main/.gemini/INSTALL.md
+```
+
+### Pi Agent
+
+Pi Agent'a söyle:
+```text
+Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Understand-Anything/refs/heads/main/.pi/INSTALL.md
+```
+
 ### Platform Uyumluluğu
 
 | Platform | Durum | Kurulum Yöntemi |
@@ -155,6 +169,8 @@ Fetch and follow instructions from https://raw.githubusercontent.com/Lum1104/Und
 | OpenClaw | ✅ Destekleniyor | AI güdümlü kurulum |
 | Cursor | ✅ Destekleniyor | Otomatik keşif |
 | Antigravity | ✅ Destekleniyor | AI güdümlü kurulum |
+| Gemini CLI | ✅ Destekleniyor | AI güdümlü kurulum |
+| Pi Agent | ✅ Destekleniyor | AI güdümlü kurulum |
 
 ---
 
