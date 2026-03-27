@@ -188,7 +188,7 @@ Pass these parameters in the dispatch prompt:
 >
 > File nodes:
 > ```json
-> [list of {id, name, filePath, summary, tags} for all file-type nodes]
+> [list of {id, filePath, summary, tags} for all file-type nodes — omit name, complexity, languageNotes]
 > ```
 >
 > Import edges:
