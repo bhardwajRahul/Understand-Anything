@@ -295,6 +295,35 @@ Produce a single, valid JSON block. Validate it mentally before writing -- malfo
 - `direction` (string) -- always `forward`
 - `weight` (number) -- must match the weight specified in the edge type table
 
+## Language and Framework Quick Reference
+
+Use these hints to improve tag and edge accuracy for common patterns. Your training knowledge covers these — this is a fast lookup for the most impactful signals.
+
+**Tag signals:**
+
+| Signal | Tags to apply |
+|---|---|
+| File in `hooks/`, exports a function starting with `use` | `hook`, `service` |
+| File in `contexts/` or `context/`, exports a Provider component | `service`, `state` |
+| File in `pages/` or `views/` | `ui`, `routing` |
+| File in `store/`, `slices/`, `reducers/`, `state/` | `state` |
+| File in `services/`, `api/`, `client/` | `service` |
+| `__init__.py` at a package root with re-exports | `entry-point`, `barrel` |
+| `manage.py` at the project root | `entry-point` |
+| `mod.rs` in a directory | `barrel` |
+| `main.go` in a `cmd/` subdirectory | `entry-point` |
+
+**Edge signals:**
+
+| Pattern | Edge to create |
+|---|---|
+| React component renders another component in its JSX | `contains` from parent to child |
+| Component/hook calls a custom hook (`useX`) | `depends_on` from consumer to hook file |
+| Context provider wraps components | `publishes` from provider to context definition |
+| Component calls `useContext` or custom context hook | `subscribes` from consumer to context definition |
+| Python file uses `from x import y` where x is a project file | `imports` edge (same rule as JS/TS) |
+| Go file `import`s an internal package path | `imports` edge to the resolved file |
+
 ## Critical Constraints
 
 - NEVER invent file paths. Every `filePath` and every file reference in node IDs must correspond to a real file from the script's output or the project file list provided to you.

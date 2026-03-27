@@ -100,22 +100,13 @@ After the subagent completes, read `$PROJECT_ROOT/.understand-anything/intermedi
 
 Batch the file list from Phase 1 into groups of **5-10 files each** (aim for balanced batch sizes).
 
-For each batch, dispatch a subagent using the prompt template at `./file-analyzer-prompt.md`. Run up to **3 subagents concurrently** using parallel dispatch.
-
-**Build the combined prompt template:**
-1. Read the base template at `./file-analyzer-prompt.md`.
-2. **Language context injection:** For each language detected in Phase 1 (e.g., `python`), read the file at `./languages/<language-id>.md` (e.g., `./languages/python.md`) and append its content after the base template under a `## Language Context` header. If the file does not exist for a detected language, skip it silently and continue. These files are in the `languages/` subdirectory next to this SKILL.md file. Use `ls ./languages/` to discover available language files if needed.
-3. **Framework addendum injection:** For each framework detected in Phase 1 (e.g., `Django`), read the file at `./frameworks/<framework-id-lowercase>.md` (e.g., `./frameworks/django.md`) and append its full content after the language context. If the file does not exist for a detected framework, skip it silently and continue. These files are in the `frameworks/` subdirectory next to this SKILL.md file. Use `ls ./frameworks/` to discover available framework files if needed.
-
-Then for each batch pass the combined template content as the subagent's prompt, appending the following additional context:
+For each batch, dispatch a subagent using the prompt template at `./file-analyzer-prompt.md`. Run up to **3 subagents concurrently** using parallel dispatch. Pass the template as the subagent's prompt, appending the following additional context:
 
 > **Additional context from main session:**
 >
 > Project: `<projectName>` — `<projectDescription>`
 > Frameworks detected: `<frameworks from Phase 1>`
 > Languages: `<languages from Phase 1>`
->
-> Use the language context and framework addendums (appended above) to produce more accurate summaries and better classify file roles.
 
 Fill in batch-specific parameters below and dispatch:
 
