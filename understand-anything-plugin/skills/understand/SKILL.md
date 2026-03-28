@@ -90,18 +90,19 @@ Dispatch a subagent using the prompt template at `./project-scanner-prompt.md`. 
 
 Pass these parameters in the dispatch prompt:
 
-> Scan this project directory to discover all source files, detect languages and frameworks.
+> Scan this project directory to discover all project files (including non-code files like configs, docs, infrastructure), detect languages and frameworks.
 > Project root: `$PROJECT_ROOT`
 > Write output to: `$PROJECT_ROOT/.understand-anything/intermediate/scan-result.json`
 
 After the subagent completes, read `$PROJECT_ROOT/.understand-anything/intermediate/scan-result.json` to get:
 - Project name, description
 - Languages, frameworks
-- File list with line counts
+- File list with line counts and `fileCategory` per file (`code`, `config`, `docs`, `infra`, `data`, `script`, `markup`)
 - Complexity estimate
-- Import map (`importMap`): pre-resolved project-internal imports per file
+- Import map (`importMap`): pre-resolved project-internal imports per file (non-code files have empty arrays)
 
 Store `importMap` in memory as `$IMPORT_MAP` for use in Phase 2 batch construction.
+Store the file list as `$FILE_LIST` with `fileCategory` metadata for use in Phase 2 batch construction.
 
 **Gate check:** If >200 files, inform the user and suggest scoping with a subdirectory argument. Proceed only if user confirms or add guidance that this may take a while.
 
@@ -112,6 +113,16 @@ Store `importMap` in memory as `$IMPORT_MAP` for use in Phase 2 batch constructi
 ### Full analysis path
 
 Batch the file list from Phase 1 into groups of **20-30 files each** (aim for ~25 files per batch for balanced sizes).
+
+**Batching strategy for non-code files:**
+- Group related non-code files together in the same batch when possible:
+  - Dockerfile + docker-compose.yml + .dockerignore → same batch
+  - SQL migration files → same batch (ordered by filename)
+  - CI/CD config files (.github/workflows/*) → same batch
+  - Documentation files (docs/*.md) → same batch
+- This allows the file-analyzer to create cross-file edges (e.g., docker-compose `depends_on` Dockerfile)
+- Non-code files can be mixed with code files in the same batch if batch sizes are small
+- Each file's `fileCategory` from Phase 1 must be included in the batch file list
 
 For each batch, dispatch a subagent using the prompt template at `./file-analyzer-prompt.md`. Run up to **5 subagents concurrently** using parallel dispatch. Pass the template as the subagent's prompt, appending the following additional context:
 
@@ -129,7 +140,7 @@ for each file in this batch:
 
 Fill in batch-specific parameters below and dispatch:
 
-> Analyze these source files and produce GraphNode and GraphEdge objects.
+> Analyze these files and produce GraphNode and GraphEdge objects.
 > Project root: `$PROJECT_ROOT`
 > Project: `<projectName>`
 > Languages: `<languages>`
@@ -142,8 +153,8 @@ Fill in batch-specific parameters below and dispatch:
 > ```
 >
 > Files to analyze in this batch:
-> 1. `<path>` (<sizeLines> lines)
-> 2. `<path>` (<sizeLines> lines)
+> 1. `<path>` (<sizeLines> lines, fileCategory: `<fileCategory>`)
+> 2. `<path>` (<sizeLines> lines, fileCategory: `<fileCategory>`)
 > ...
 
 After ALL batches complete, read each `batch-<N>.json` file and merge:
@@ -175,7 +186,7 @@ Merge all file-analyzer results into a single set of nodes and edges. Then perfo
 
 **Build the combined prompt template:**
 1. Read the base template at `./architecture-analyzer-prompt.md`.
-2. **Language context injection:** For each language detected in Phase 1 (e.g., `python`), read the file at `./languages/<language-id>.md` (e.g., `./languages/python.md`) and append its content after the base template under a `## Language Context` header. If the file does not exist for a detected language, skip it silently and continue. These files are in the `languages/` subdirectory next to this SKILL.md file.
+2. **Language context injection:** For each language detected in Phase 1 (e.g., `python`, `markdown`, `dockerfile`, `yaml`, `sql`, `terraform`, `graphql`, `protobuf`, `shell`, `html`, `css`), read the file at `./languages/<language-id>.md` (e.g., `./languages/python.md`, `./languages/dockerfile.md`) and append its content after the base template under a `## Language Context` header. If the file does not exist for a detected language, skip it silently and continue. These files are in the `languages/` subdirectory next to this SKILL.md file. **Include non-code language snippets** — they provide edge patterns and summary styles for non-code files.
 3. **Framework addendum injection:** For each framework detected in Phase 1 (e.g., `Django`), read the file at `./frameworks/<framework-id-lowercase>.md` (e.g., `./frameworks/django.md`) and append its full content after the language context. If the file does not exist for a detected framework, skip it silently and continue. These files are in the `frameworks/` subdirectory next to this SKILL.md file.
 
 Pass the combined content as the subagent's prompt, appending the following additional context:
@@ -189,7 +200,7 @@ Pass the combined content as the subagent's prompt, appending the following addi
 > $DIR_TREE
 > ```
 >
-> Use the directory tree, language context, and framework addendums (appended above) to inform layer assignments. Directory structure is strong evidence for layer boundaries.
+> Use the directory tree, language context, and framework addendums (appended above) to inform layer assignments. Directory structure is strong evidence for layer boundaries. Non-code files (config, docs, infrastructure, data) should be assigned to appropriate layers — see the prompt template for guidance.
 
 Pass these parameters in the dispatch prompt:
 
@@ -198,14 +209,19 @@ Pass these parameters in the dispatch prompt:
 > Write output to: `$PROJECT_ROOT/.understand-anything/intermediate/layers.json`
 > Project: `<projectName>` — `<projectDescription>`
 >
-> File nodes:
+> File nodes (all node types — includes code files, config, document, service, pipeline, table, schema, resource, endpoint):
 > ```json
-> [list of {id, name, filePath, summary, tags} for all file-type nodes — omit complexity, languageNotes]
+> [list of {id, type, name, filePath, summary, tags} for ALL file-level nodes — omit complexity, languageNotes]
 > ```
 >
 > Import edges:
 > ```json
 > [list of edges with type "imports"]
+> ```
+>
+> All edges (for cross-category analysis — includes configures, documents, deploys, triggers, etc.):
+> ```json
+> [list of ALL edges — include all edge types]
 > ```
 
 After the subagent completes, read `$PROJECT_ROOT/.understand-anything/intermediate/layers.json` and normalize it into a final `layers` array. Apply these steps **in order**:
@@ -213,7 +229,7 @@ After the subagent completes, read `$PROJECT_ROOT/.understand-anything/intermedi
 1. **Unwrap envelope:** If the file contains `{ "layers": [...] }` instead of a plain array, extract the inner array. (The prompt requests a plain array, but LLMs may still produce an envelope.)
 2. **Rename legacy fields:** If any layer object has a `nodes` field instead of `nodeIds`, rename `nodes` → `nodeIds`. If `nodes` entries are objects with an `id` field rather than plain strings, extract just the `id` values into `nodeIds`.
 3. **Synthesize missing IDs:** If any layer is missing an `id`, generate one as `layer:<kebab-case-name>`.
-4. **Convert file paths:** If `nodeIds` entries are raw file paths (not prefixed with `file:`), convert them to `file:<relative-path>`.
+4. **Convert file paths:** If `nodeIds` entries are raw file paths without a known prefix (`file:`, `config:`, `document:`, `service:`, `pipeline:`, `table:`, `schema:`, `resource:`, `endpoint:`), convert them to `file:<relative-path>`.
 5. **Drop dangling refs:** Remove any `nodeIds` entries that do not exist in the merged node set.
 
 Each element of the final `layers` array MUST have this shape:
@@ -224,7 +240,7 @@ Each element of the final `layers` array MUST have this shape:
     "id": "layer:<kebab-case-name>",
     "name": "<layer name>",
     "description": "<what belongs in this layer>",
-    "nodeIds": ["file:src/App.tsx", "file:src/main.tsx"]
+    "nodeIds": ["file:src/App.tsx", "config:tsconfig.json", "document:README.md"]
   }
 ]
 ```
@@ -267,9 +283,9 @@ Pass these parameters in the dispatch prompt:
 > Project: `<projectName>` — `<projectDescription>`
 > Languages: `<languages>`
 >
-> Nodes (file nodes only):
+> Nodes (all file-level nodes — includes code files, config, document, service, pipeline, table, schema, resource, endpoint):
 > ```json
-> [list of {id, name, filePath, summary, type} for file-type nodes ONLY — do NOT include function or class nodes]
+> [list of {id, name, filePath, summary, type} for ALL file-level nodes — do NOT include function or class nodes]
 > ```
 >
 > Layers:
@@ -277,16 +293,16 @@ Pass these parameters in the dispatch prompt:
 > [list of {id, name, description} for each layer — omit nodeIds]
 > ```
 >
-> Edges (imports and calls only):
+> Edges (all types — includes imports, calls, configures, documents, deploys, triggers, etc.):
 > ```json
-> [list of edges where type is "imports" or "calls" only — exclude all other edge types]
+> [list of ALL edges — include all edge types for complete graph topology analysis]
 > ```
 
 After the subagent completes, read `$PROJECT_ROOT/.understand-anything/intermediate/tour.json` and normalize it into a final `tour` array. Apply these steps **in order**:
 
 1. **Unwrap envelope:** If the file contains `{ "steps": [...] }` instead of a plain array, extract the inner array. (The prompt requests a plain array, but LLMs may still produce an envelope.)
 2. **Rename legacy fields:** If any step has `nodesToInspect` instead of `nodeIds`, rename it → `nodeIds`. If any step has `whyItMatters` instead of `description`, rename it → `description`.
-3. **Convert file paths:** If `nodeIds` entries are raw file paths, convert them to `file:<relative-path>`.
+3. **Convert file paths:** If `nodeIds` entries are raw file paths without a known prefix (`file:`, `config:`, `document:`, `service:`, `pipeline:`, `table:`, `schema:`, `resource:`, `endpoint:`), convert them to `file:<relative-path>`.
 4. **Drop dangling refs:** Remove any `nodeIds` entries that do not exist in the merged node set.
 5. **Sort** by `order` before saving.
 
@@ -296,7 +312,13 @@ Each element of the final `tour` array MUST have this shape:
 [
   {
     "order": 1,
-    "title": "Start at the app entry",
+    "title": "Project Overview",
+    "description": "Start with the README to understand the project's purpose and architecture.",
+    "nodeIds": ["document:README.md"]
+  },
+  {
+    "order": 2,
+    "title": "Application Entry Point",
     "description": "This step explains how the frontend boots and mounts.",
     "nodeIds": ["file:src/main.tsx", "file:src/App.tsx"]
   }
@@ -374,7 +396,8 @@ try {
     if (!nodeIds.has(e.source)) issues.push(`Edge[${i}] source '${e.source}' not found`);
     if (!nodeIds.has(e.target)) issues.push(`Edge[${i}] target '${e.target}' not found`);
   });
-  const fileNodes = graph.nodes.filter(n => n.type === 'file').map(n => n.id);
+  const fileLevelTypes = new Set(['file', 'config', 'document', 'service', 'pipeline', 'table', 'schema', 'resource', 'endpoint']);
+  const fileNodes = graph.nodes.filter(n => fileLevelTypes.has(n.type)).map(n => n.id);
   const assigned = new Map();
   if (!Array.isArray(graph.layers)) { if (graph.layers) warnings.push('graph.layers is not an array'); graph.layers = []; }
   if (!Array.isArray(graph.tour)) { if (graph.tour) warnings.push('graph.tour is not an array'); graph.tour = []; }
@@ -440,7 +463,7 @@ Dispatch a subagent using the prompt template at `./graph-reviewer-prompt.md`. R
 > Phase warnings/errors accumulated during analysis:
 > - [list any batch failures, skipped files, or warnings from Phases 2-5]
 >
-> Cross-validate: every file in the scan inventory should have a corresponding `file:` node in the graph. Flag any missing files. Also flag any graph nodes whose `filePath` doesn't appear in the scan inventory.
+> Cross-validate: every file in the scan inventory should have a corresponding node in the graph (node types may vary: `file:`, `config:`, `document:`, `service:`, `pipeline:`, `table:`, `schema:`, `resource:`, `endpoint:`). Flag any missing files. Also flag any graph nodes whose `filePath` doesn't appear in the scan inventory.
 
 Pass these parameters in the dispatch prompt:
 
@@ -500,8 +523,8 @@ Pass these parameters in the dispatch prompt:
 
 4. Report a summary to the user containing:
    - Project name and description
-   - Files analyzed / total files
-   - Nodes created (broken down by type: file, function, class)
+   - Files analyzed / total files (with breakdown by fileCategory: code, config, docs, infra, data, script, markup)
+   - Nodes created (broken down by type: file, function, class, config, document, service, table, endpoint, pipeline, schema, resource)
    - Edges created (broken down by type)
    - Layers identified (with names)
    - Tour steps generated (count)
@@ -526,16 +549,24 @@ Pass these parameters in the dispatch prompt:
 
 ## Reference: KnowledgeGraph Schema
 
-### Node Types
+### Node Types (13 total)
 | Type | Description | ID Convention |
 |---|---|---|
-| `file` | Source file | `file:<relative-path>` |
+| `file` | Source code file | `file:<relative-path>` |
 | `function` | Function or method | `function:<relative-path>:<name>` |
 | `class` | Class, interface, or type | `class:<relative-path>:<name>` |
 | `module` | Logical module or package | `module:<name>` |
 | `concept` | Abstract concept or pattern | `concept:<name>` |
+| `config` | Configuration file (YAML, JSON, TOML, env) | `config:<relative-path>` |
+| `document` | Documentation file (Markdown, RST, TXT) | `document:<relative-path>` |
+| `service` | Deployable service definition (Dockerfile, K8s) | `service:<relative-path>` |
+| `table` | Database table or migration | `table:<relative-path>:<table-name>` |
+| `endpoint` | API endpoint or route definition | `endpoint:<relative-path>:<endpoint-name>` |
+| `pipeline` | CI/CD pipeline configuration | `pipeline:<relative-path>` |
+| `schema` | Schema definition (GraphQL, Protobuf, Prisma) | `schema:<relative-path>` |
+| `resource` | Infrastructure resource (Terraform, CloudFormation) | `resource:<relative-path>` |
 
-### Edge Types (18 total)
+### Edge Types (26 total)
 | Category | Types |
 |---|---|
 | Structural | `imports`, `exports`, `contains`, `inherits`, `implements` |
@@ -543,14 +574,16 @@ Pass these parameters in the dispatch prompt:
 | Data flow | `reads_from`, `writes_to`, `transforms`, `validates` |
 | Dependencies | `depends_on`, `tested_by`, `configures` |
 | Semantic | `related`, `similar_to` |
+| Infrastructure | `deploys`, `serves`, `provisions`, `triggers` |
+| Schema/Data | `migrates`, `documents`, `routes`, `defines_schema` |
 
 ### Edge Weight Conventions
 | Edge Type | Weight |
 |---|---|
 | `contains` | 1.0 |
 | `inherits`, `implements` | 0.9 |
-| `calls`, `exports` | 0.8 |
-| `imports` | 0.7 |
-| `depends_on` | 0.6 |
-| `tested_by` | 0.5 |
+| `calls`, `exports`, `defines_schema` | 0.8 |
+| `imports`, `deploys`, `migrates` | 0.7 |
+| `depends_on`, `configures`, `triggers` | 0.6 |
+| `tested_by`, `documents`, `provisions`, `serves`, `routes` | 0.5 |
 | All others | 0.5 (default) |
