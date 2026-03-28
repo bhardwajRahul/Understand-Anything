@@ -8,6 +8,14 @@ const typeColors: Record<string, string> = {
   class: "var(--color-node-class)",
   module: "var(--color-node-module)",
   concept: "var(--color-node-concept)",
+  config: "var(--color-node-config)",
+  document: "var(--color-node-document)",
+  service: "var(--color-node-service)",
+  table: "var(--color-node-table)",
+  endpoint: "var(--color-node-endpoint)",
+  pipeline: "var(--color-node-pipeline)",
+  schema: "var(--color-node-schema)",
+  resource: "var(--color-node-resource)",
 };
 
 const typeTextColors: Record<string, string> = {
@@ -16,6 +24,14 @@ const typeTextColors: Record<string, string> = {
   class: "text-node-class",
   module: "text-node-module",
   concept: "text-node-concept",
+  config: "text-node-config",
+  document: "text-node-document",
+  service: "text-node-service",
+  table: "text-node-table",
+  endpoint: "text-node-endpoint",
+  pipeline: "text-node-pipeline",
+  schema: "text-node-schema",
+  resource: "text-node-resource",
 };
 
 const complexityColors: Record<string, string> = {
