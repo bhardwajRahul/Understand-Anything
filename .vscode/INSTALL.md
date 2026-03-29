@@ -28,7 +28,7 @@ Skills will appear when you type `/` in GitHub Copilot Chat.
    mkdir -p ~/.copilot/skills
    SKILLS_DIR=~/understand-anything/understand-anything-plugin/skills
    for skill in "$SKILLS_DIR"/*/; do
-     ln -s "$skill" ~/.copilot/skills/$(basename "$skill")
+     ln -sf "$skill" ~/.copilot/skills/$(basename "$skill")
    done
    # Universal plugin root symlink — lets the dashboard skill find packages/dashboard/
    # Skip if already exists (e.g. another platform was installed first)
@@ -75,8 +75,8 @@ Skills update instantly through the symlinks.
 
 ```bash
 for skill in understand understand-chat understand-dashboard understand-diff understand-explain understand-onboard; do
-  rm ~/.copilot/skills/$skill
+  rm -f ~/.copilot/skills/$skill
 done
-rm ~/.understand-anything-plugin
+rm -f ~/.understand-anything-plugin
 rm -rf ~/understand-anything
 ```
