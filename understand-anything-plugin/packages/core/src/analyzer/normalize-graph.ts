@@ -2,6 +2,7 @@ const VALID_PREFIXES = new Set([
   "file", "func", "class", "module", "concept",
   "config", "document", "service", "table", "endpoint",
   "pipeline", "schema", "resource",
+  "domain", "flow", "step",
 ]);
 
 const TYPE_TO_PREFIX: Record<string, string> = {
@@ -18,6 +19,9 @@ const TYPE_TO_PREFIX: Record<string, string> = {
   pipeline: "pipeline",
   schema: "schema",
   resource: "resource",
+  domain: "domain",
+  flow: "flow",
+  step: "step",
 };
 
 /**
@@ -68,6 +72,13 @@ export function normalizeNodeId(
   const { prefix, path } = stripToValidPrefix(trimmed);
 
   if (prefix) {
+    // For step nodes with filePath, reconstruct as step:filePath:stepSlug
+    if (node.type === "step" && node.filePath) {
+      // Use the last colon-separated segment of the path as the step slug
+      const lastColon = path.lastIndexOf(":");
+      const stepSlug = lastColon >= 0 ? path.slice(lastColon + 1) : path;
+      return `${prefix}:${node.filePath}:${stepSlug}`;
+    }
     return `${prefix}:${path}`;
   }
 
