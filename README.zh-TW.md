@@ -8,10 +8,11 @@
 </p>
 
 <p align="center">
-  <a href="#-快速開始"><img src="https://img.shields.io/badge/快速開始-blue?style=for-the-badge" alt="Quick Start" /></a>
-  <a href="https://github.com/Lum1104/Understand-Anything/blob/main/LICENSE"><img src="https://img.shields.io/badge/授權條款-MIT-yellow?style=for-the-badge" alt="License: MIT" /></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude_Code-外掛程式-8A2BE2?style=for-the-badge" alt="Claude Code Plugin" /></a>
-  <a href="https://lum1104.github.io/Understand-Anything"><img src="https://img.shields.io/badge/專案首頁-d4a574?style=for-the-badge" alt="Homepage" /></a>
+  <a href="#-快速開始"><img src="https://img.shields.io/badge/快速開始-blue" alt="Quick Start" /></a>
+  <a href="https://github.com/Lum1104/Understand-Anything/blob/main/LICENSE"><img src="https://img.shields.io/badge/授權條款-MIT-yellow" alt="License: MIT" /></a>
+  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude_Code-外掛程式-8A2BE2" alt="Claude Code Plugin" /></a>
+  <a href="https://lum1104.github.io/Understand-Anything"><img src="https://img.shields.io/badge/專案首頁-d4a574" alt="Homepage" /></a>
+  <a href="https://lum1104.github.io/Understand-Anything/demo/"><img src="https://img.shields.io/badge/線上展示-00c853" alt="Live Demo" /></a>
 </p>
 
 <p align="center">
