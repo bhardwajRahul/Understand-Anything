@@ -45,6 +45,8 @@
 
 Understand Anything 是一個基於 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 的外掛程式，透過多智能體（multi-agent）架構分析你的專案，建構包含檔案、函式、類別以及相依關係的知識圖譜，並提供一個視覺化互動介面，幫助你理解整個系統。不再「盲讀程式碼」，而是從全局視角理解系統結構。
 
+> **寓教於樂的圖表 > 僅為炫技的圖表。**
+
 ---
 
 ## ✨ 核心功能

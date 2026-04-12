@@ -45,6 +45,8 @@
 
 Understand Anything es un plugin de [Claude Code](https://docs.anthropic.com/en/docs/claude-code) que analiza tu proyecto con un pipeline multi-agente, construye un grafo de conocimiento de cada archivo, función, clase y dependencia, y luego te ofrece un panel interactivo para explorarlo visualmente. Deja de leer código a ciegas. Empieza a ver el panorama completo.
 
+> **Grafos que enseñan > grafos que solo presumen.**
+
 ---
 
 ## ✨ Características

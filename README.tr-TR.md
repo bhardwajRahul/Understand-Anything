@@ -46,6 +46,8 @@
 
 Understand Anything, projenizi çok-ajan hattıyla analiz eden, her dosya, fonksiyon, sınıf ve bağımlılığın bilgi grafiğini oluşturan ve hepsini görsel olarak keşfetmen için interaktif bir kontrol paneli sunan bir [Claude Code](https://docs.anthropic.com/en/docs/claude-code) eklentisidir. Kodu körü körüne okumayı bırak. Büyük resmi görmeye başla.
 
+> **Öğreten grafikler > sadece gösteriş yapan grafikler.**
+
 ---
 
 ## ✨ Özellikler
