@@ -52,7 +52,7 @@ Understand Anything 是一個基於 [Claude Code](https://docs.anthropic.com/en/
 ## ✨ 核心功能
 
 > [!NOTE]
-> **想直接體驗？** 在我們的[首頁](https://lum1104.github.io/Understand-Anything/)試試[線上演示](https://lum1104.github.io/Understand-Anything/) — 一個可以平移、縮放、搜尋和探索的全互動式儀表盤。
+> **想直接體驗？** 在我們的[首頁](https://lum1104.github.io/Understand-Anything/)試試[線上演示](https://lum1104.github.io/Understand-Anything/demo/) — 一個可以平移、縮放、搜尋和探索的全互動式儀表盤。
 
 ### 探索程式碼結構圖
 

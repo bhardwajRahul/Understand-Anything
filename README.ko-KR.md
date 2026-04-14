@@ -52,7 +52,7 @@ Understand Anything은 [Claude Code](https://docs.anthropic.com/en/docs/claude-c
 ## ✨ 주요 기능
 
 > [!NOTE]
-> **바로 체험해보세요!** [홈페이지](https://lum1104.github.io/Understand-Anything/)에서 [라이브 데모](https://lum1104.github.io/Understand-Anything/)를 사용해보세요 — 팬, 줌, 검색, 탐색이 가능한 완전한 인터랙티브 대시보드입니다.
+> **바로 체험해보세요!** [홈페이지](https://lum1104.github.io/Understand-Anything/)에서 [라이브 데모](https://lum1104.github.io/Understand-Anything/demo/)를 사용해보세요 — 팬, 줌, 검색, 탐색이 가능한 완전한 인터랙티브 대시보드입니다.
 
 ### 구조 그래프 탐색
 

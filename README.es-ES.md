@@ -52,7 +52,7 @@ Understand Anything es un plugin de [Claude Code](https://docs.anthropic.com/en/
 ## ✨ Características
 
 > [!NOTE]
-> **¿Quieres probarlo directamente?** Prueba la [demo en vivo](https://lum1104.github.io/Understand-Anything/) en nuestra [página principal](https://lum1104.github.io/Understand-Anything/) — un panel interactivo donde puedes navegar, hacer zoom, buscar y explorar directamente en tu navegador.
+> **¿Quieres probarlo directamente?** Prueba la [demo en vivo](https://lum1104.github.io/Understand-Anything/demo/) en nuestra [página principal](https://lum1104.github.io/Understand-Anything/) — un panel interactivo donde puedes navegar, hacer zoom, buscar y explorar directamente en tu navegador.
 
 ### Explora el grafo estructural
 
