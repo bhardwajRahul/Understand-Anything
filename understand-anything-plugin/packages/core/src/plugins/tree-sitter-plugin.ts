@@ -8,7 +8,7 @@ import type {
 } from "../types.js";
 import type { LanguageConfig } from "../languages/types.js";
 import type { LanguageExtractor } from "./extractors/types.js";
-import { TypeScriptExtractor } from "./extractors/typescript-extractor.js";
+import { builtinExtractors } from "./extractors/index.js";
 
 // web-tree-sitter uses CJS internally; we need createRequire for .wasm resolution
 const require = createRequire(import.meta.url);
@@ -84,13 +84,15 @@ export class TreeSitterPlugin implements AnalyzerPlugin {
 
     this.languages = langs;
 
-    // Register extractors (default: TypeScript/JavaScript)
+    // Register extractors (default: all builtin extractors)
     if (extractors && extractors.length > 0) {
       for (const extractor of extractors) {
         this.registerExtractor(extractor);
       }
     } else {
-      this.registerExtractor(new TypeScriptExtractor());
+      for (const extractor of builtinExtractors) {
+        this.registerExtractor(extractor);
+      }
     }
   }
 
