@@ -113,13 +113,17 @@ const TEST_PATTERN_GROUPS: Array<{ label: string; patterns: string[] }> = [
     ],
   },
   {
-    // Rust's dominant unit-test convention is inline `#[cfg(test)] mod
-    // tests { ... }` blocks that cannot be excluded by filename. The
-    // Rust Book (chapter 11.3) also describes extracting those blocks
-    // into a sibling `tests.rs` file — that extracted form is what a
-    // file-pattern rule can catch. Integration tests already live under
-    // tests/ (covered by EXACT_DIR_NAMES); benches/ was added in the
-    // same PR as this group.
+    // Rust testing is bimodal, similar to Python. Library-scale crates
+    // (ripgrep, alacritty, helix, cargo) keep unit tests inline in
+    // `#[cfg(test)] mod tests { ... }` blocks that no file-pattern
+    // rule can catch, so the group barely moves the needle for them.
+    // Workspace monorepos (paritytech/polkadot-sdk, solana-labs/solana,
+    // rust-lang/rust) colocate a `foo_test.rs` beside `foo.rs` at
+    // scale — measurement showed *_test.rs alone accounts for the
+    // majority of hits (232 files / −15% on polkadot-sdk analysed
+    // budget). Integration tests already live under tests/ and Cargo
+    // benches under benches/ (both dir-covered), so the file globs
+    // here target the colocated shape specifically.
     label: "Rust",
     patterns: [
       "**/tests.rs",
